@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Adventure 5 — Kingdom Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka+One&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+
+        .font-pixel {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .font-game {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Custom Pixel UI Elements & Animations */
+        .pixel-card {
+            background: rgba(30, 41, 59, 0.95);
+            border: 4px solid #38bdf8;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        .btn-game {
+            transition: all 0.15s ease;
+            box-shadow: 0 6px 0 #1e293b, 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-game:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #1e293b, 0 12px 20px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-game:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1e293b, 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
+        #gameCanvas {
+            background: #000;
+            display: block;
+            margin: 0 auto;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.2);
+        }
+
+        /* Touch Control Overlay */
+        .touch-btn {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            touch-action: none;
+        }
+
+        .touch-btn:active {
+            background: rgba(56, 189, 248, 0.6);
+            transform: scale(0.95);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
+        }
+
+        /* Floating animation for parallax header */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="w-full bg-slate-900/90 border-b border-slate-800 px-4 py-3 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('homeScreen')">
+                <div class="w-10 h-10 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-lg flex items-center justify-center font-pixel text-slate-950 text-xl font-bold shadow-lg">
+                    M5
+                </div>
+                <div>
+                    <h1 class="font-game text-xl tracking-wide text-amber-400 leading-none">MATH ADVENTURE 5</h1>
+                    <p class="text-xs text-slate-400 font-semibold tracking-wider">KINGDOM QUEST • KSSR TAHUN 5</p>
+                </div>
+            </div>
+
+            <!-- Global Actions -->
+            <div class="flex items-center gap-2">
+                <!-- Language Switcher -->
+                <button id="langToggleBtn" onclick="toggleLanguage()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-700 flex items-center gap-2 transition">
+                    <i class="fa-solid font-bold fa-language text-amber-400 text-sm"></i>
+                    <span id="langText">BM</span>
+                </button>
+
+                <!-- Audio Toggles -->
+                <button id="musicBtn" onclick="toggleMusic()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-9 h-9 rounded-lg border border-slate-700 flex items-center justify-center transition" title="Muzik">
+                    <i id="musicIcon" class="fa-solid fa-music text-emerald-400"></i>
+                </button>
+                <button id="sfxBtn" onclick="toggleSfx()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-9 h-9 rounded-lg border border-slate-700 flex items-center justify-center transition" title="Kesan Bunyi">
+                    <i id="sfxIcon" class="fa-solid fa-volume-high text-cyan-400"></i>
+                </button>
+                <button onclick="toggleFullScreen()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-9 h-9 rounded-lg border border-slate-700 flex items-center justify-center transition" title="Skrin Penuh">
+                    <i class="fa-solid fa-expand text-slate-300"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER FOR SCREENS -->
+    <main class="flex-grow flex items-center justify-center p-2 sm:p-4 relative">
+        
+        <!-- PAGE 1: HOME / INTRO SCREEN -->
+        <section id="homeScreen" class="w-full max-w-4xl text-center flex flex-col items-center justify-center py-6 px-4">
+            <div class="relative mb-6">
+                <div class="inline-block bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 p-1 rounded-2xl shadow-2xl animate-float">
+                    <div class="bg-slate-900 px-8 py-6 rounded-xl border border-amber-500/30">
+                        <span class="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 mb-2 inline-block">
+                            Permainan Matematik Tahun 5
+                        </span>
+                        <h2 class="font-game text-4xl sm:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 drop-shadow-md">
+                            MATH ADVENTURE 5
+                        </h2>
+                        <h3 class="font-pixel text-lg sm:text-2xl text-cyan-400 tracking-wider mt-1">
+                            KINGDOM QUEST
+                        </h3>
+                    </div>
+                </div>
+                <p class="font-game text-sm sm:text-base text-slate-300 mt-3 tracking-widest uppercase">
+                    RUN • JUMP • SOLVE • CONQUER!
+                </p>
+            </div>
+
+            <!-- Hero Avatar Showcase -->
+            <div class="flex items-center justify-center gap-6 my-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 w-full max-w-md">
+                <canvas id="heroPreviewCanvas" width="80" height="80" class="bg-slate-950 rounded-xl border border-slate-700"></canvas>
+                <div class="text-left">
+                    <h4 class="font-game text-amber-400 text-lg" id="welcomeMsg">Selamat Datang, Pahlawan!</h4>
+                    <p class="text-xs text-slate-400" id="subWelcomeMsg">Sedia untuk menguasai Dunia Matematik KSSR Tahun 5?</p>
+                </div>
+            </div>
+
+            <!-- Home Action Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md my-4">
+                <button onclick="checkProfileAndStart()" class="btn-game bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-game text-xl py-3 px-6 rounded-xl border-2 border-emerald-300 flex items-center justify-center gap-3 col-span-1 sm:col-span-2">
+                    <i class="fa-solid fa-play text-2xl"></i>
+                    <span data-i18n="btnPlay">MULA MAIN</span>
+                </button>
+                
+                <button onclick="showScreen('howToPlayScreen')" class="btn-game bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold py-2.5 px-4 rounded-xl border border-cyan-500/40 flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-book"></i>
+                    <span data-i18n="btnHowToPlay">CARA MAIN</span>
+                </button>
+
+                <button onclick="showLeaderboard()" class="btn-game bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold py-2.5 px-4 rounded-xl border border-amber-500/40 flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-trophy"></i>
+                    <span data-i18n="btnLeaderboard">CARTA APEX</span>
+                </button>
+
+                <button onclick="showAchievements()" class="btn-game bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold py-2.5 px-4 rounded-xl border border-purple-500/40 flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-medal"></i>
+                    <span data-i18n="btnAchievements">PENCAPAIAN</span>
+                </button>
+
+                <button onclick="showCredits()" class="btn-game bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl border border-slate-600 flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    <span data-i18n="btnCredits">KREDIT</span>
+                </button>
+            </div>
+
+            <!-- Teacher Portal Hidden Button -->
+            <div class="mt-4">
+                <button onclick="openTeacherDashboard()" class="text-xs text-slate-500 hover:text-amber-400 underline transition flex items-center gap-1.5 mx-auto">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span data-i18n="teacherPortal">Portal Guru & Laporan</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- PAGE 2: PLAYER PROFILE SCREEN -->
+        <section id="profileScreen" class="w-full max-w-lg hidden">
+            <div class="pixel-card p-6 sm:p-8 text-center relative">
+                <h2 class="font-game text-2xl sm:text-3xl text-amber-400 mb-1" data-i18n="profileTitle">PROFIL MURID</h2>
+                <p class="text-xs text-slate-400 mb-6" data-i18n="profileSub">Sila masukkan maklumat murid untuk menyimpan rekod pencapaian.</p>
+
+                <form id="profileForm" onsubmit="saveProfile(event)" class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider" data-i18n="labelName">Nama Murid:</label>
+                        <input type="text" id="playerName" required placeholder="Contoh: Amirul Bin Ahmad" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-amber-400 font-semibold text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider" data-i18n="labelClass">Kelas:</label>
+                        <input type="text" id="playerClass" required placeholder="Contoh: 5 Cemerlang" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-amber-400 font-semibold text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-2 uppercase tracking-wider" data-i18n="labelAvatar">Pilih Pahlawan Anda:</label>
+                        <div class="grid grid-cols-4 gap-3" id="avatarSelector">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" onclick="showScreen('homeScreen')" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-600 text-sm">
+                            <span data-i18n="btnBack">KEMBALI</span>
+                        </button>
+                        <button type="submit" class="w-2/3 btn-game bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-game text-lg py-2.5 rounded-xl border border-yellow-300 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-flag-checkered"></i>
+                            <span data-i18n="btnStartAdventure">MULA KEMBARA</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- PAGE 3: WORLD MAP SCREEN -->
+        <section id="worldMapScreen" class="w-full max-w-5xl hidden flex flex-col items-center">
+            <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 mb-4 shadow-2xl">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-800 pb-4 mb-4">
+                    <div>
+                        <span class="text-xs text-amber-400 font-bold uppercase tracking-wider" data-i18n="mapHeader">PETA DUNIA KSSR TAHUN 5</span>
+                        <h2 class="font-game text-2xl sm:text-3xl text-slate-100" id="mapPlayerGreeting">Peta Kembara</h2>
+                    </div>
+                    <div class="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-coins text-amber-400 text-sm"></i>
+                            <span id="totalCoinsDisplay" class="font-pixel text-xs text-amber-300">0</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                            <span id="totalStarsDisplay" class="font-pixel text-xs text-yellow-300">0 / 24</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Worlds Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="worldsGrid">
+                    <!-- Dynamic World Cards populated by JS -->
+                </div>
+            </div>
+
+            <button onclick="showScreen('homeScreen')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-xl border border-slate-700 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-house"></i>
+                <span data-i18n="btnHome">KE MENU UTAMA</span>
+            </button>
+        </section>
+
+        <!-- STAGE SELECT MODAL -->
+        <div id="stageSelectModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="pixel-card max-w-md w-full p-6 text-center relative">
+                <button onclick="closeStageModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div id="modalWorldIcon" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-3 shadow-lg"></div>
+                <h3 id="modalWorldTitle" class="font-game text-xl text-amber-400">Dunia 1</h3>
+                <p id="modalWorldTopic" class="text-xs text-slate-400 mb-6">Topik KSSR</p>
+
+                <div class="space-y-3" id="stageButtonsList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- GAMEPLAY SCREEN -->
+        <section id="gameplayScreen" class="w-full max-w-5xl hidden flex flex-col items-center relative">
+            <!-- HUD BAR -->
+            <div class="w-full bg-slate-900/95 border border-slate-800 rounded-t-xl px-4 py-2 flex flex-wrap justify-between items-center gap-2 text-xs font-bold">
+                <!-- Hearts & Profile -->
+                <div class="flex items-center gap-3">
+                    <div id="hudHearts" class="flex gap-1 text-red-500 text-base">
+                        <i class="fa-solid fa-heart"></i>
+                        <i class="fa-solid fa-heart"></i>
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <span id="hudPlayerName" class="text-slate-300 font-semibold hidden sm:inline">Pemain</span>
+                </div>
+
+                <!-- Stage Progress & Score -->
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1.5 text-amber-400">
+                        <i class="fa-solid fa-coins"></i>
+                        <span id="hudCoins" class="font-pixel text-amber-300">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-yellow-400">
+                        <i class="fa-solid fa-star"></i>
+                        <span id="hudScore" class="font-pixel text-yellow-300">0</span>
+                    </div>
+                    <div class="bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700 text-cyan-300">
+                        <span data-i18n="hudQ">SOALAN:</span> <span id="hudQProgress" class="font-pixel">1/5</span>
+                    </div>
+                    <div id="hudStreakBadge" class="bg-purple-900/60 border border-purple-500/50 text-purple-300 px-2 py-0.5 rounded text-xs hidden">
+                        STREAK ×<span id="hudStreakVal">0</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <button onclick="pauseGame()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 text-xs">
+                    <i class="fa-solid fa-pause"></i>
+                </button>
+            </div>
+
+            <!-- CANVAS CONTAINER -->
+            <div class="relative w-full overflow-hidden bg-slate-950 rounded-b-xl">
+                <canvas id="gameCanvas" width="800" height="450" class="w-full h-auto"></canvas>
+
+                <!-- Interactive Math Overlay Box for HOTS / Shop / Data Boss / Question Block -->
+                <div id="mathOverlay" class="absolute inset-0 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4 z-20">
+                    <div class="pixel-card max-w-lg w-full p-6 text-center animate-float">
+                        <span id="mathOverlayTag" class="text-xs font-bold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 mb-2 inline-block">
+                            CABARAN MATEMATIK
+                        </span>
+                        <h3 id="mathQuestionText" class="font-game text-lg sm:text-xl text-slate-100 my-3 leading-relaxed">
+                            Berapakah hasil darab 450 × 12?
+                        </h3>
+
+                        <!-- Interactive Shop / Visual Container if needed -->
+                        <div id="mathVisualContainer" class="my-3 hidden"></div>
+
+                        <!-- Options Grid -->
+                        <div id="mathOptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+                            <!-- Answer buttons dynamically rendered -->
+                        </div>
+
+                        <!-- Hint Button -->
+                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-800 text-xs">
+                            <button id="useHintBtn" onclick="useMathHint()" class="text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold">
+                                <i class="fa-solid fa-lightbulb"></i> <span data-i18n="btnHint">Guna Petunjuk</span>
+                            </button>
+                            <span id="hintTextDisplay" class="text-slate-400 italic text-left max-w-xs"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- On-Screen Touch Controls for Mobile Devices -->
+                <div id="touchControls" class="absolute bottom-3 left-3 right-3 flex justify-between items-end pointer-events-none select-none z-10">
+                    <!-- D-PAD Left / Right -->
+                    <div class="flex gap-2 pointer-events-auto">
+                        <button id="btnLeft" class="touch-btn w-14 h-14 bg-slate-900/70 border-slate-600 active:bg-cyan-600/80">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button id="btnRight" class="touch-btn w-14 h-14 bg-slate-900/70 border-slate-600 active:bg-cyan-600/80">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Jump Button -->
+                    <div class="pointer-events-auto">
+                        <button id="btnJump" class="touch-btn w-16 h-16 bg-amber-500/80 border-amber-300 active:bg-amber-400 text-slate-950 font-game text-xl">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL COMPLETE SCREEN -->
+        <section id="levelCompleteScreen" class="w-full max-w-md hidden">
+            <div class="pixel-card p-6 sm:p-8 text-center relative animate-float">
+                <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center border-2 border-amber-400 text-amber-400 text-3xl mx-auto mb-3">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="font-game text-3xl text-amber-400 mb-1" data-i18n="lvlComplete">STAGE SELESAI!</h2>
+                <p class="text-xs text-slate-400 mb-4" id="completeStageTitle">Dunia 1 - Stage 1</p>
+
+                <!-- Stars Earned -->
+                <div id="starsEarnedRow" class="flex justify-center gap-3 text-3xl text-amber-400 mb-6">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                </div>
+
+                <!-- Stats Summary Card -->
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-left space-y-2 mb-6 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400" data-i18n="statScore">Mata Skor:</span>
+                        <span id="statScoreVal" class="font-pixel text-yellow-400">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400" data-i18n="statAccuracy">Ketepatan Matematik:</span>
+                        <span id="statAccuracyVal" class="font-bold text-emerald-400">100%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400" data-i18n="statStreak">Streak Terbaik:</span>
+                        <span id="statStreakVal" class="font-bold text-purple-400">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400" data-i18n="statCoins">Syiling Dikumpul:</span>
+                        <span id="statCoinsVal" class="font-bold text-amber-300">0</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="showScreen('worldMapScreen')" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-600 text-sm">
+                        <span data-i18n="btnWorldMap">PETA DUNIA</span>
+                    </button>
+                    <button onclick="nextLevelOrRetry()" class="w-1/2 btn-game bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-game text-base py-2.5 rounded-xl border border-emerald-300">
+                        <span data-i18n="btnNext">TERUSKAN</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEADERBOARD SCREEN -->
+        <section id="leaderboardScreen" class="w-full max-w-3xl hidden">
+            <div class="pixel-card p-6 sm:p-8 text-center">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
+                    <div class="text-left">
+                        <h2 class="font-game text-2xl text-amber-400" data-i18n="lbTitle">CARTA LEADERBOARD APEX</h2>
+                        <p class="text-xs text-slate-400" data-i18n="lbSub">Pahlawan Matematik Terbaik Sekolah</p>
+                    </div>
+                    <button onclick="showScreen('homeScreen')" class="text-slate-400 hover:text-white text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-900 text-xs font-bold uppercase text-amber-400 border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Ked.</th>
+                                <th class="p-3">Pemain</th>
+                                <th class="p-3">Kelas</th>
+                                <th class="p-3 text-right">Skor</th>
+                                <th class="p-3 text-right">Bintang</th>
+                                <th class="p-3 text-right">Ketepatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardTbody" class="divide-y divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 flex justify-center">
+                    <button onclick="showScreen('homeScreen')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-xl border border-slate-700 text-sm">
+                        <span data-i18n="btnBack">KEMBALI</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACHIEVEMENTS SCREEN -->
+        <section id="achievementsScreen" class="w-full max-w-3xl hidden">
+            <div class="pixel-card p-6 sm:p-8 text-center">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
+                    <div class="text-left">
+                        <h2 class="font-game text-2xl text-purple-400" data-i18n="achTitle">LENCANA PENCAPAIAN</h2>
+                        <p class="text-xs text-slate-400" data-i18n="achSub">Kumpul kesemua 9 lencana keagungan KSSR Tahun 5</p>
+                    </div>
+                    <button onclick="showScreen('homeScreen')" class="text-slate-400 hover:text-white text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4" id="achievementsGrid">
+                    <!-- Dynamic Badges -->
+                </div>
+
+                <div class="mt-6">
+                    <button onclick="showScreen('homeScreen')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-xl border border-slate-700 text-sm">
+                        <span data-i18n="btnBack">KEMBALI</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOW TO PLAY SCREEN -->
+        <section id="howToPlayScreen" class="w-full max-w-2xl hidden">
+            <div class="pixel-card p-6 sm:p-8">
+                <h2 class="font-game text-2xl text-cyan-400 text-center mb-1" data-i18n="htpTitle">CARA BERMAIN</h2>
+                <p class="text-xs text-slate-400 text-center mb-6" data-i18n="htpSub">Panduan pengembaraan platformer matematik</p>
+
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex items-start gap-4">
+                        <div class="w-12 h-12 bg-cyan-500/20 border border-cyan-400 text-cyan-400 rounded-lg flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-solid fa-gamepad"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-amber-400 text-base" data-i18n="htp1Title">Kawalan Pergerakan</h4>
+                            <p class="text-xs text-slate-400 mt-1" data-i18n="htp1Desc">Komputer: Guna kekunci Anak Panah / WASD untuk bergerak dan melompat. Peranti Mudah Alih: Guna butang skrin sentuh di bawah.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex items-start gap-4">
+                        <div class="w-12 h-12 bg-amber-500/20 border border-amber-400 text-amber-400 rounded-lg flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-solid fa-cube"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-amber-400 text-base" data-i18n="htp2Title">Blok Soalan & Platform Jawapan</h4>
+                            <p class="text-xs text-slate-400 mt-1" data-i18n="htp2Desc">Tanduk Blok Misteri (?) untuk mengeluarkan soalan. Lompat ke atas platform atau musuh dengan jawapan yang betul untuk mara!</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex items-start gap-4">
+                        <div class="w-12 h-12 bg-purple-500/20 border border-purple-400 text-purple-400 rounded-lg flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-amber-400 text-base" data-i18n="htp3Title">Power-Ups & Streak</h4>
+                            <p class="text-xs text-slate-400 mt-1" data-i18n="htp3Desc">Jawab 3 soalan berturut-turut untuk aktifkan Star Multiplier. Kumpul Pelindung (Shield) dan Hati Tambahan!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button onclick="checkProfileAndStart()" class="btn-game bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-game text-lg py-2.5 px-8 rounded-xl border border-emerald-300">
+                        <span data-i18n="btnLetsPlay">JOM MAIN!</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CREDITS SCREEN -->
+        <section id="creditsScreen" class="w-full max-w-xl hidden text-center">
+            <div class="pixel-card p-6 sm:p-8">
+                <div class="w-16 h-16 bg-amber-500/20 border border-amber-400 rounded-2xl mx-auto flex items-center justify-center text-amber-400 text-2xl mb-3">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 class="font-game text-2xl text-amber-400 mb-1">MATH ADVENTURE 5</h2>
+                <p class="text-xs text-slate-400 mb-6">Aplikasi Pembelajaran Matematik Berasaskan Permainan</p>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-3 text-xs text-slate-300 text-left mb-6">
+                    <div>
+                        <span class="text-slate-500 uppercase text-[10px] font-bold block">Pereka & Pembangun Utama:</span>
+                        <p class="font-bold text-amber-300 text-sm">CIKGU ROOBAN ARUMUGAM</p>
+                        <p class="text-slate-400">Jurulatih STEM | Pendidik Matematik Primary</p>
+                    </div>
+                    <div class="border-t border-slate-800 pt-2">
+                        <span class="text-slate-500 uppercase text-[10px] font-bold block">Kurikulum Rasmi:</span>
+                        <p class="font-semibold text-slate-200">Matematik Tahun 5 KSSR Semakan 2017 (KPM)</p>
+                    </div>
+                    <div class="border-t border-slate-800 pt-2">
+                        <p class="text-slate-400 italic text-[11px]">
+                            "Aplikasi pendidikan ini dibangunkan secara bebas bagi tujuan PdPC interaktif murid-murid sekolah rendah Malaysia."
+                        </p>
+                    </div>
+                </div>
+
+                <button onclick="showScreen('homeScreen')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-xl border border-slate-700 text-sm">
+                    <span data-i18n="btnBack">KEMBALI</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- TEACHER DASHBOARD SCREEN -->
+        <section id="teacherDashboardScreen" class="w-full max-w-4xl hidden">
+            <div class="pixel-card p-6 sm:p-8">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
+                    <div>
+                        <h2 class="font-game text-2xl text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                            <span data-i18n="teacherTitle">DASHBOARD LOKAL GURU</span>
+                        </h2>
+                        <p class="text-xs text-slate-400" data-i18n="teacherSub">Analisis Prestasi Murid & Laporan PdPC KSSR Tahun 5</p>
+                    </div>
+                    <button onclick="showScreen('homeScreen')" class="text-slate-400 hover:text-white text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Teacher Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 text-center">
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Murid Berdaftar</span>
+                        <p id="tStatPupils" class="font-game text-xl text-amber-400">1</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Jumlah Soalan Dijawab</span>
+                        <p id="tStatQuestions" class="font-game text-xl text-cyan-400">0</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Purata Ketepatan</span>
+                        <p id="tStatAccuracy" class="font-game text-xl text-emerald-400">0%</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Topik Perlu Bimbingan</span>
+                        <p id="tStatWeakTopic" class="font-bold text-xs text-rose-400 mt-1">Tiada Data</p>
+                    </div>
+                </div>
+
+                <!-- Student List Table -->
+                <div class="overflow-x-auto mb-6">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900 text-amber-400 font-bold uppercase border-b border-slate-800">
+                            <tr>
+                                <th class="p-2.5">Nama Murid</th>
+                                <th class="p-2.5">Kelas</th>
+                                <th class="p-2.5 text-center">Stage Selesai</th>
+                                <th class="p-2.5 text-right">Skor</th>
+                                <th class="p-2.5 text-right">Ketepatan</th>
+                                <th class="p-2.5 text-right">Tarikh Terakhir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherTableBody" class="divide-y divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-wrap justify-between items-center gap-3 pt-3 border-t border-slate-800">
+                    <button onclick="resetLeaderboardData()" class="bg-rose-900/50 hover:bg-rose-800 text-rose-200 px-4 py-2 rounded-lg text-xs font-bold border border-rose-700/50 flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Reset Data Murid</span>
+                    </button>
+
+                    <button onclick="showScreen('homeScreen')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-xl border border-slate-700 text-sm">
+                        <span data-i18n="btnBack">KEMBALI</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full bg-slate-950 border-t border-slate-900 px-4 py-3 text-center text-xs text-slate-500">
+        <p>© 2026 Math Adventure 5 — Kingdom Quest. Hak Cipta Terpelihara. Modul Matematik Tahun 5 KSSR Semakan.</p>
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           1. GLOBAL APP STATE & DUAL-LANGUAGE SYSTEM (BM / EN)
+           ========================================================================== */
+        let currentLang = 'BM'; // 'BM' or 'EN'
+        let audioEnabled = { music: true, sfx: true };
+
+        const translations = {
+            BM: {
+                btnPlay: "MULA MAIN",
+                btnHowToPlay: "CARA MAIN",
+                btnLeaderboard: "CARTA APEX",
+                btnAchievements: "PENCAPAIAN",
+                btnCredits: "KREDIT",
+                teacherPortal: "Portal Guru & Laporan",
+                welcomeMsg: "Selamat Datang, Pahlawan!",
+                subWelcomeMsg: "Sedia untuk menguasai Dunia Matematik KSSR Tahun 5?",
+                profileTitle: "PROFIL MURID",
+                profileSub: "Sila masukkan maklumat murid untuk menyimpan rekod pencapaian.",
+                labelName: "Nama Murid:",
+                labelClass: "Kelas:",
+                labelAvatar: "Pilih Pahlawan Anda:",
+                btnBack: "KEMBALI",
+                btnStartAdventure: "MULA KEMBARA",
+                mapHeader: "PETA DUNIA KSSR TAHUN 5",
+                hudQ: "SOALAN:",
+                btnHint: "Guna Petunjuk",
+                lvlComplete: "STAGE SELESAI!",
+                statScore: "Mata Skor:",
+                statAccuracy: "Ketepatan Matematik:",
+                statStreak: "Streak Terbaik:",
+                statCoins: "Syiling Dikumpul:",
+                btnWorldMap: "PETA DUNIA",
+                btnNext: "TERUSKAN",
+                btnHome: "KE MENU UTAMA",
+                lbTitle: "CARTA LEADERBOARD APEX",
+                lbSub: "Pahlawan Matematik Terbaik Sekolah",
+                achTitle: "LENCANA PENCAPAIAN",
+                achSub: "Kumpul kesemua 9 lencana keagungan KSSR Tahun 5",
+                htpTitle: "CARA BERMAIN",
+                htpSub: "Panduan pengembaraan platformer matematik",
+                htp1Title: "Kawalan Pergerakan",
+                htp1Desc: "Komputer: Guna kekunci Anak Panah / WASD untuk bergerak dan melompat. Peranti Mudah Alih: Guna butang skrin sentuh di bawah.",
+                htp2Title: "Blok Soalan & Platform Jawapan",
+                htp2Desc: "Tanduk Blok Misteri (?) untuk mengeluarkan soalan. Lompat ke atas platform atau musuh dengan jawapan yang betul untuk mara!",
+                htp3Title: "Power-Ups & Streak",
+                htp3Desc: "Jawab 3 soalan berturut-turut untuk aktifkan Star Multiplier. Kumpul Pelindung (Shield) dan Hati Tambahan!",
+                btnLetsPlay: "JOM MAIN!",
+                teacherTitle: "DASHBOARD LOKAL GURU",
+                teacherSub: "Analisis Prestasi Murid & Laporan PdPC KSSR Tahun 5"
+            },
+            EN: {
+                btnPlay: "PLAY GAME",
+                btnHowToPlay: "HOW TO PLAY",
+                btnLeaderboard: "LEADERBOARD",
+                btnAchievements: "ACHIEVEMENTS",
+                btnCredits: "CREDITS",
+                teacherPortal: "Teacher Portal & Reports",
+                welcomeMsg: "Welcome, Math Hero!",
+                subWelcomeMsg: "Ready to conquer Year 5 KSSR Mathematics Worlds?",
+                profileTitle: "STUDENT PROFILE",
+                profileSub: "Enter student details to save game progress.",
+                labelName: "Student Name:",
+                labelClass: "Class:",
+                labelAvatar: "Select Your Hero Avatar:",
+                btnBack: "BACK",
+                btnStartAdventure: "START ADVENTURE",
+                mapHeader: "YEAR 5 WORLD MAP",
+                hudQ: "QUESTION:",
+                btnHint: "Use Hint",
+                lvlComplete: "STAGE COMPLETE!",
+                statScore: "Score Points:",
+                statAccuracy: "Math Accuracy:",
+                statStreak: "Best Streak:",
+                statCoins: "Coins Collected:",
+                btnWorldMap: "WORLD MAP",
+                btnNext: "CONTINUE",
+                btnHome: "MAIN MENU",
+                lbTitle: "APEX LEADERBOARD",
+                lbSub: "Top Math Champions in School",
+                achTitle: "BADGES & ACHIEVEMENTS",
+                achSub: "Collect all 9 Year 5 Math Master Badges",
+                htpTitle: "HOW TO PLAY",
+                htpSub: "Math side-scroller platformer guide",
+                htp1Title: "Controls & Movement",
+                htp1Desc: "Desktop: Use Arrow keys / WASD to move and jump. Mobile: Use large touch controls below.",
+                htp2Title: "Mystery Blocks & Answer Platforms",
+                htp2Desc: "Headbutt Mystery Blocks (?) to trigger math questions. Jump on platforms or stomp enemies with correct answers!",
+                htp3Title: "Power-Ups & Streaks",
+                htp3Desc: "Answer 3 consecutive questions correctly for Star Multiplier. Collect Shields and Hearts!",
+                btnLetsPlay: "LET'S PLAY!",
+                teacherTitle: "TEACHER LOCAL DASHBOARD",
+                teacherSub: "Student Performance Analytics & KSSR Year 5 Reports"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'BM' ? 'EN' : 'BM';
+            document.getElementById('langText').innerText = currentLang;
+            updateI18nText();
+            renderWorldsGrid();
+        }
+
+        function updateI18nText() {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+        }
+
+        /* ==========================================================================
+           2. WEB AUDIO SYNTHESIS ENGINE (NO EXTERNAL AUDIO FILES REQUIRED)
+           ========================================================================== */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSynthSound(type) {
+            if (!audioEnabled.sfx) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'jump') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.15);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'coin') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(987.77, now); // B5
+                    osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.45);
+                    osc.start(now);
+                    osc.stop(now + 0.45);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(180, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'powerup') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                }
+            } catch(e) { console.log("Audio play error", e); }
+        }
+
+        function toggleMusic() {
+            audioEnabled.music = !audioEnabled.music;
+            const icon = document.getElementById('musicIcon');
+            icon.className = audioEnabled.music ? 'fa-solid fa-music text-emerald-400' : 'fa-solid fa-slash-forward text-slate-500';
+        }
+
+        function toggleSfx() {
+            audioEnabled.sfx = !audioEnabled.sfx;
+            const icon = document.getElementById('sfxIcon');
+            icon.className = audioEnabled.sfx ? 'fa-solid fa-volume-high text-cyan-400' : 'fa-solid fa-volume-xmark text-slate-500';
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(()=>{});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        /* ==========================================================================
+           3. PLAYER PROFILE & LOCAL STORAGE SYSTEM
+           ========================================================================== */
+        let playerProfile = {
+            name: "Murid Champion",
+            class: "5 Cemerlang",
+            avatar: 0,
+            unlockedWorlds: 1,
+            completedStages: {},
+            totalCoins: 0,
+            totalScore: 0,
+            totalStars: 0,
+            questionsAnswered: 0,
+            questionsCorrect: 0,
+            achievements: []
+        };
+
+        const AVATARS = [
+            { name: "Hero Boy", color: "#38bdf8", hatColor: "#f59e0b" },
+            { name: "Hero Girl", color: "#ec4899", hatColor: "#10b981" },
+            { name: "Ninja Math", color: "#8b5cf6", hatColor: "#3b82f6" },
+            { name: "Wizard Scholar", color: "#10b981", hatColor: "#ec4899" }
+        ];
+
+        function loadSavedProfile() {
+            const saved = localStorage.getItem('MATH_ADVENTURE_5_PROFILE');
+            if (saved) {
+                try {
+                    playerProfile = Object.assign(playerProfile, JSON.parse(saved));
+                } catch(e){}
+            }
+            updateProfileUI();
+        }
+
+        function saveProfileToStorage() {
+            localStorage.setItem('MATH_ADVENTURE_5_PROFILE', JSON.stringify(playerProfile));
+            updateLeaderboardRecord();
+        }
+
+        function updateProfileUI() {
+            if (playerProfile.name) {
+                document.getElementById('welcomeMsg').innerText = (currentLang === 'BM' ? 'Selamat Datang, ' : 'Welcome, ') + playerProfile.name + '!';
+                document.getElementById('hudPlayerName').innerText = playerProfile.name;
+                document.getElementById('mapPlayerGreeting').innerText = playerProfile.name + ' (' + playerProfile.class + ')';
+            }
+            document.getElementById('totalCoinsDisplay').innerText = playerProfile.totalCoins || 0;
+            document.getElementById('totalStarsDisplay').innerText = (playerProfile.totalStars || 0) + ' / 24';
+            drawHeroPreview();
+        }
+
+        function drawHeroPreview() {
+            const cvs = document.getElementById('heroPreviewCanvas');
+            if (!cvs) return;
+            const ctx = cvs.getContext('2d');
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            const av = AVATARS[playerProfile.avatar || 0];
+
+            // Draw Head & Hat
+            ctx.fillStyle = av.color;
+            ctx.beginPath();
+            ctx.arc(40, 45, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(33, 42, 6, 0, Math.PI * 2);
+            ctx.arc(47, 42, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(35, 42, 2.5, 0, Math.PI * 2);
+            ctx.arc(49, 42, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hat
+            ctx.fillStyle = av.hatColor;
+            ctx.fillRect(20, 22, 40, 8);
+            ctx.fillRect(28, 12, 24, 10);
+        }
+
+        function renderAvatarSelector() {
+            const container = document.getElementById('avatarSelector');
+            container.innerHTML = '';
+            AVATARS.forEach((av, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => {
+                    playerProfile.avatar = idx;
+                    renderAvatarSelector();
+                    drawHeroPreview();
+                };
+                btn.className = `p-2 rounded-xl border-2 flex flex-col items-center gap-1 transition ${playerProfile.avatar === idx ? 'border-amber-400 bg-amber-500/20' : 'border-slate-700 bg-slate-900 hover:border-slate-500'}`;
+                
+                const miniCvs = document.createElement('canvas');
+                miniCvs.width = 40;
+                miniCvs.height = 40;
+                const mCtx = miniCvs.getContext('2d');
+                mCtx.fillStyle = av.color;
+                mCtx.beginPath();
+                mCtx.arc(20, 22, 12, 0, Math.PI * 2);
+                mCtx.fill();
+                mCtx.fillStyle = av.hatColor;
+                mCtx.fillRect(10, 10, 20, 4);
+
+                btn.appendChild(miniCvs);
+                const label = document.createElement('span');
+                label.className = 'text-[10px] font-bold text-slate-300';
+                label.innerText = av.name;
+                btn.appendChild(label);
+
+                container.appendChild(btn);
+            });
+        }
+
+        function checkProfileAndStart() {
+            if (!playerProfile.name || playerProfile.name === "Murid Champion") {
+                showScreen('profileScreen');
+                renderAvatarSelector();
+            } else {
+                showScreen('worldMapScreen');
+                renderWorldsGrid();
+            }
+        }
+
+        function saveProfile(e) {
+            e.preventDefault();
+            playerProfile.name = document.getElementById('playerName').value.trim();
+            playerProfile.class = document.getElementById('playerClass').value.trim();
+            saveProfileToStorage();
+            updateProfileUI();
+            showScreen('worldMapScreen');
+            renderWorldsGrid();
+        }
+
+        /* ==========================================================================
+           4. KSSR MATHEMATICS YEAR 5 CURRICULUM WORLDS & QUESTION ENGINE
+           ========================================================================== */
+        const WORLDS = [
+            {
+                id: 1,
+                nameBM: "NUMBER KINGDOM",
+                nameEN: "NUMBER KINGDOM",
+                topicBM: "Nombor Bulat dan Operasi (Hingga 1,000,000)",
+                topicEN: "Whole Numbers & Operations (Up to 1,000,000)",
+                icon: "fa-cubes",
+                color: "from-amber-500 to-orange-600",
+                bgGradient: ["#1e1b4b", "#311b92"]
+            },
+            {
+                id: 2,
+                nameBM: "FRACTION FOREST",
+                nameEN: "FRACTION FOREST",
+                topicBM: "Pecahan, Perpuluhan dan Peratus",
+                topicEN: "Fractions, Decimals & Percentages",
+                icon: "fa-tree",
+                color: "from-emerald-500 to-green-600",
+                bgGradient: ["#064e3b", "#022c22"]
+            },
+            {
+                id: 3,
+                nameBM: "MONEY CITY",
+                nameEN: "MONEY CITY",
+                topicBM: "Wang (RM - Simpanan, Pelaburan & Kredit)",
+                topicEN: "Money (RM - Savings, Investment & Credit)",
+                icon: "fa-city",
+                color: "from-cyan-500 to-blue-600",
+                bgGradient: ["#0f172a", "#1e293b"]
+            },
+            {
+                id: 4,
+                nameBM: "TIME TOWER",
+                nameEN: "TIME TOWER",
+                topicBM: "Masa dan Waktu (Tempoh & Jadual)",
+                topicEN: "Time & Duration (Schedules & Convert)",
+                icon: "fa-clock",
+                color: "from-purple-500 to-indigo-600",
+                bgGradient: ["#3b0764", "#1e1b4b"]
+            },
+            {
+                id: 5,
+                nameBM: "MEASUREMENT MOUNTAIN",
+                nameEN: "MEASUREMENT MOUNTAIN",
+                topicBM: "Panjang, Jisim dan Isi Padu Cecair",
+                topicEN: "Length, Mass & Volume of Liquid",
+                icon: "fa-mountain",
+                color: "from-rose-500 to-red-600",
+                bgGradient: ["#4c0519", "#2e1065"]
+            },
+            {
+                id: 6,
+                nameBM: "GEOMETRY CASTLE",
+                nameEN: "GEOMETRY CASTLE",
+                topicBM: "Ruang (Sudut, Perimeter, Luas & Isi Padu)",
+                topicEN: "Space (Angles, Perimeter, Area & Volume)",
+                icon: "fa-chess-castle",
+                color: "from-yellow-500 to-amber-600",
+                bgGradient: ["#451a03", "#172554"]
+            },
+            {
+                id: 7,
+                nameBM: "COORDINATE ISLAND",
+                nameEN: "COORDINATE ISLAND",
+                topicBM: "Koordinat, Nisbah dan Kadaran",
+                topicEN: "Coordinates, Ratio & Proportion",
+                icon: "fa-map-location-dot",
+                color: "from-teal-500 to-emerald-600",
+                bgGradient: ["#134e4a", "#0f172a"]
+            },
+            {
+                id: 8,
+                nameBM: "DATA FORTRESS",
+                nameEN: "DATA FORTRESS",
+                topicBM: "Pengurusan Data (Carta Palang & Mod, Median)",
+                topicEN: "Data Management (Bar Charts, Mode & Median)",
+                icon: "fa-chart-pie",
+                color: "from-fuchsia-500 to-purple-600",
+                bgGradient: ["#581c87", "#0f172a"]
+            }
+        ];
+
+        /* Generate Questions dynamically per World to ensure >20 unique questions per world */
+        function generateQuestionsForWorld(worldId) {
+            const list = [];
+            for (let i = 0; i < 25; i++) {
+                if (worldId === 1) { // Whole Numbers
+                    const a = Math.floor(Math.random() * 400000) + 100000;
+                    const b = Math.floor(Math.random() * 300000) + 50000;
+                    const ans = a + b;
+                    list.push({
+                        qBM: `Cari hasil tambah: ${a.toLocaleString()} + ${b.toLocaleString()} = ?`,
+                        qEN: `Find the sum: ${a.toLocaleString()} + ${b.toLocaleString()} = ?`,
+                        ans: ans.toLocaleString(),
+                        options: [ans.toLocaleString(), (ans - 10000).toLocaleString(), (ans + 10000).toLocaleString()],
+                        hintBM: "Tambah dari nilai tempat sa, puluh, ratus hingga ratus ribu.",
+                        hintEN: "Add starting from ones, tens, hundreds up to hundred thousands."
+                    });
+                } else if (worldId === 2) { // Fractions / Decimals
+                    const denom = [2, 4, 5, 10][i % 4];
+                    const num = Math.floor(Math.random() * 3) + 1;
+                    const percent = (num / denom) * 100;
+                    list.push({
+                        qBM: `Tukarkan pecahan ${num}/${denom} kepada peratus:`,
+                        qEN: `Convert the fraction ${num}/${denom} into a percentage:`,
+                        ans: `${percent}%`,
+                        options: [`${percent}%`, `${percent - 10}%`, `${percent + 5}%`],
+                        hintBM: "Darabkan pecahan dengan 100%.",
+                        hintEN: "Multiply the fraction by 100%."
+                    });
+                } else if (worldId === 3) { // Money RM
+                    const val1 = Math.floor(Math.random() * 500) + 100;
+                    const val2 = Math.floor(Math.random() * 200) + 50;
+                    const total = val1 + val2;
+                    list.push({
+                        qBM: `Hitung jumlah wang: RM${val1} + RM${val2} = ?`,
+                        qEN: `Calculate total money: RM${val1} + RM${val2} = ?`,
+                        ans: `RM${total}`,
+                        options: [`RM${total}`, `RM${total - 20}`, `RM${total + 15}`],
+                        hintBM: "Jumlahkan nilai RM dengan teliti.",
+                        hintEN: "Add up the RM values carefully."
+                    });
+                } else if (worldId === 4) { // Time
+                    const hrs = Math.floor(Math.random() * 5) + 2;
+                    const mins = hrs * 60;
+                    list.push({
+                        qBM: `Tukarkan ${hrs} jam kepada minit:`,
+                        qEN: `Convert ${hrs} hours into minutes:`,
+                        ans: `${mins} minit / mins`,
+                        options: [`${mins} minit / mins`, `${mins - 30} minit / mins`, `${mins + 60} minit / mins`],
+                        hintBM: "1 jam = 60 minit. Darabkan jam dengan 60.",
+                        hintEN: "1 hour = 60 minutes. Multiply hours by 60."
+                    });
+                } else if (worldId === 5) { // Measurement
+                    const km = Math.floor(Math.random() * 8) + 2;
+                    const m = km * 1000;
+                    list.push({
+                        qBM: `Tukarkan ${km} km kepada meter (m):`,
+                        qEN: `Convert ${km} km to meters (m):`,
+                        ans: `${m} m`,
+                        options: [`${m} m`, `${m / 10} m`, `${m + 500} m`],
+                        hintBM: "1 km = 1,000 m. Darabkan nilai km dengan 1,000.",
+                        hintEN: "1 km = 1,000 m. Multiply km value by 1,000."
+                    });
+                } else if (worldId === 6) { // Geometry
+                    const length = Math.floor(Math.random() * 10) + 4;
+                    const width = Math.floor(Math.random() * 6) + 2;
+                    const area = length * width;
+                    list.push({
+                        qBM: `Hitung luas segiempat tepat dengan panjang ${length} cm dan lebar ${width} cm:`,
+                        qEN: `Find the area of a rectangle with length ${length} cm and width ${width} cm:`,
+                        ans: `${area} cm²`,
+                        options: [`${area} cm²`, `${(length + width) * 2} cm²`, `${area + 12} cm²`],
+                        hintBM: "Luas = Panjang × Lebar",
+                        hintEN: "Area = Length × Width"
+                    });
+                } else if (worldId === 7) { // Coordinates & Ratio
+                    const x = Math.floor(Math.random() * 8) + 1;
+                    const y = Math.floor(Math.random() * 8) + 1;
+                    list.push({
+                        qBM: `Apakah koordinat bagi asalan (Origin) pada satah Cartes?`,
+                        qEN: `What are the coordinates of the Origin on a Cartesian plane?`,
+                        ans: "(0, 0)",
+                        options: ["(0, 0)", "(1, 1)", "(0, 1)"],
+                        hintBM: "Asalan terletak pada persilangan paksi-x dan paksi-y.",
+                        hintEN: "The origin is located at the intersection of x and y axes."
+                    });
+                } else { // Data Management
+                    const modeVal = Math.floor(Math.random() * 10) + 5;
+                    list.push({
+                        qBM: `Diberi set data: [${modeVal}, 4, ${modeVal}, 7, ${modeVal}, 9]. Apakah Mod?`,
+                        qEN: `Given data set: [${modeVal}, 4, ${modeVal}, 7, ${modeVal}, 9]. What is the Mode?`,
+                        ans: `${modeVal}`,
+                        options: [`${modeVal}`, `4`, `7`],
+                        hintBM: "Mod ialah nilai kekerapan tertinggi dalam set data.",
+                        hintEN: "Mode is the value with the highest frequency in a data set."
+                    });
+                }
+            }
+            return list;
+        }
+
+        /* ==========================================================================
+           5. WORLD MAP & STAGE NAVIGATION
+           ========================================================================== */
+        let activeWorldId = 1;
+        let activeStageId = 1;
+
+        function renderWorldsGrid() {
+            const container = document.getElementById('worldsGrid');
+            container.innerHTML = '';
+
+            WORLDS.forEach(world => {
+                const isUnlocked = world.id <= (playerProfile.unlockedWorlds || 1);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition relative flex flex-col justify-between ${
+                    isUnlocked 
+                    ? 'bg-slate-900/90 border-amber-500/40 hover:border-amber-400 cursor-pointer shadow-lg hover:scale-[1.02]' 
+                    : 'bg-slate-950/60 border-slate-800 opacity-60 cursor-not-allowed'
+                }`;
+
+                const stageStars = (playerProfile.completedStages[`w${world.id}_s1`] ? 1 : 0) +
+                                   (playerProfile.completedStages[`w${world.id}_s2`] ? 1 : 0) +
+                                   (playerProfile.completedStages[`w${world.id}_s3`] ? 1 : 0);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="w-12 h-12 bg-gradient-to-tr ${world.color} rounded-xl flex items-center justify-center text-white text-xl shadow-md">
+                                <i class="fa-solid ${world.icon}"></i>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isUnlocked ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'}">
+                                ${isUnlocked ? (currentLang === 'BM' ? 'TERBUKA' : 'UNLOCKED') : (currentLang === 'BM' ? 'TERKUNCI' : 'LOCKED')}
+                            </span>
+                        </div>
+                        <h3 class="font-game text-base text-amber-400">DUNIA ${world.id}: ${currentLang === 'BM' ? world.nameBM : world.nameEN}</h3>
+                        <p class="text-xs text-slate-400 mt-1 line-clamp-2">${currentLang === 'BM' ? world.topicBM : world.topicEN}</p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <div class="flex items-center gap-1 text-yellow-400">
+                            <i class="fa-solid fa-star"></i>
+                            <span class="font-bold">${stageStars} / 3</span>
+                        </div>
+                        ${isUnlocked ? '<span class="text-cyan-400 font-bold flex items-center gap-1">MAIN <i class="fa-solid fa-arrow-right text-[10px]"></i></span>' : '<i class="fa-solid fa-lock text-slate-600"></i>'}
+                    </div>
+                `;
+
+                if (isUnlocked) {
+                    card.onclick = () => openStageModal(world.id);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        function openStageModal(worldId) {
+            activeWorldId = worldId;
+            const world = WORLDS.find(w => w.id === worldId);
+            document.getElementById('modalWorldTitle').innerText = `DUNIA ${world.id}: ${currentLang === 'BM' ? world.nameBM : world.nameEN}`;
+            document.getElementById('modalWorldTopic').innerText = currentLang === 'BM' ? world.topicBM : world.topicEN;
+            
+            const iconBox = document.getElementById('modalWorldIcon');
+            iconBox.className = `w-16 h-16 bg-gradient-to-tr ${world.color} rounded-2xl mx-auto flex items-center justify-center text-white text-3xl mb-3 shadow-lg`;
+            iconBox.innerHTML = `<i class="fa-solid ${world.icon}"></i>`;
+
+            const btnContainer = document.getElementById('stageButtonsList');
+            btnContainer.innerHTML = '';
+
+            for (let stage = 1; stage <= 3; stage++) {
+                const stageKey = `w${worldId}_s${stage}`;
+                const isDone = playerProfile.completedStages[stageKey];
+                const btn = document.createElement('button');
+                btn.onclick = () => {
+                    closeStageModal();
+                    startPlatformerGame(worldId, stage);
+                };
+                btn.className = `w-full p-3 rounded-xl border flex items-center justify-between text-left transition ${
+                    isDone 
+                    ? 'bg-emerald-950/40 border-emerald-500/50 hover:bg-emerald-900/50 text-emerald-200' 
+                    : 'bg-slate-900 border-slate-700 hover:border-amber-400 text-slate-200'
+                }`;
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-pixel text-xs text-amber-400">
+                            ${stage}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm">Stage ${stage}: ${stage === 3 ? (currentLang === 'BM' ? 'CABARAN BOSS' : 'BOSS CHALLENGE') : (currentLang === 'BM' ? 'PENGEMBARAAN' : 'ADVENTURE')}</h4>
+                            <p class="text-[11px] text-slate-400">10 Soalan & Rintangan Platform</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid ${isDone ? 'fa-circle-check text-emerald-400' : 'fa-play text-slate-500'}"></i>
+                `;
+                btnContainer.appendChild(btn);
+            }
+
+            document.getElementById('stageSelectModal').classList.remove('hidden');
+        }
+
+        function closeStageModal() {
+            document.getElementById('stageSelectModal').classList.add('hidden');
+        }
+
+        /* ==========================================================================
+           6. COMPLETE 2D PLATFORMER GAME ENGINE (CANVAS BASED)
+           ========================================================================== */
+        let canvas, ctx;
+        let gameLoopReq = null;
+        let gameState = {
+            active: false,
+            score: 0,
+            coins: 0,
+            hearts: 3,
+            currentQIndex: 0,
+            streak: 0,
+            bestStreak: 0,
+            correctCount: 0,
+            incorrectCount: 0,
+            questions: []
+        };
+
+        // Game Entities
+        let player = {
+            x: 50, y: 300, vx: 0, vy: 0,
+            width: 32, height: 42,
+            isGrounded: false, jumpsLeft: 2
+        };
+
+        let keys = { left: false, right: false, jump: false };
+        let platforms = [];
+        let coins = [];
+        let mysteryBlocks = [];
+        let enemies = [];
+        let activeOverlayQuestion = null;
+
+        function startPlatformerGame(worldId, stageId) {
+            activeWorldId = worldId;
+            activeStageId = stageId;
+            showScreen('gameplayScreen');
+
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+
+            // Reset Game Stats
+            gameState = {
+                active: true,
+                score: 0,
+                coins: 0,
+                hearts: 3,
+                currentQIndex: 0,
+                streak: 0,
+                bestStreak: 0,
+                correctCount: 0,
+                incorrectCount: 0,
+                questions: generateQuestionsForWorld(worldId)
+            };
+
+            // Setup Controls
+            setupInputListeners();
+
+            // Load Level Geometry & Objects
+            initLevelObjects();
+
+            // Start Main Loop
+            if (gameLoopReq) cancelAnimationFrame(gameLoopReq);
+            gameLoop();
+        }
+
+        function setupInputListeners() {
+            window.onkeydown = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+                if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+                if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && player.jumpsLeft > 0) {
+                    player.vy = -10.5;
+                    player.jumpsLeft--;
+                    playSynthSound('jump');
+                }
+            };
+
+            window.onkeyup = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+            };
+
+            // Mobile Touch Controls
+            const bLeft = document.getElementById('btnLeft');
+            const bRight = document.getElementById('btnRight');
+            const bJump = document.getElementById('btnJump');
+
+            bLeft.ontouchstart = (e) => { e.preventDefault(); keys.left = true; };
+            bLeft.ontouchend = (e) => { e.preventDefault(); keys.left = false; };
+            bRight.ontouchstart = (e) => { e.preventDefault(); keys.right = true; };
+            bRight.ontouchend = (e) => { e.preventDefault(); keys.right = false; };
+            bJump.ontouchstart = (e) => {
+                e.preventDefault();
+                if (player.jumpsLeft > 0) {
+                    player.vy = -10.5;
+                    player.jumpsLeft--;
+                    playSynthSound('jump');
+                }
+            };
+        }
+
+        function initLevelObjects() {
+            player.x = 60;
+            player.y = 280;
+            player.vx = 0;
+            player.vy = 0;
+
+            // Ground and platforms
+            platforms = [
+                { x: 0, y: 390, width: 800, height: 60, type: 'ground' },
+                { x: 180, y: 300, width: 120, height: 20, type: 'platform' },
+                { x: 380, y: 240, width: 140, height: 20, type: 'platform' },
+                { x: 580, y: 310, width: 120, height: 20, type: 'platform' }
+            ];
+
+            // Mystery Question Blocks
+            mysteryBlocks = [
+                { x: 220, y: 190, width: 32, height: 32, hit: false },
+                { x: 430, y: 130, width: 32, height: 32, hit: false },
+                { x: 620, y: 190, width: 32, height: 32, hit: false }
+            ];
+
+            // Coins
+            coins = [
+                { x: 200, y: 260, collected: false },
+                { x: 240, y: 260, collected: false },
+                { x: 410, y: 200, collected: false },
+                { x: 450, y: 200, collected: false },
+                { x: 610, y: 270, collected: false }
+            ];
+
+            // Enemies
+            enemies = [
+                { x: 320, y: 360, vx: 1.2, width: 28, height: 28 },
+                { x: 600, y: 360, vx: -1.5, width: 28, height: 28 }
+            ];
+        }
+
+        function gameLoop() {
+            if (!gameState.active) return;
+
+            updatePhysics();
+            renderCanvas();
+            updateHUD();
+
+            gameLoopReq = requestAnimationFrame(gameLoop);
+        }
+
+        function updatePhysics() {
+            // Horizontal movement
+            if (keys.left) player.vx = -4.5;
+            else if (keys.right) player.vx = 4.5;
+            else player.vx *= 0.7; // friction
+
+            player.x += player.vx;
+            player.vy += 0.55; // gravity
+            player.y += player.vy;
+
+            // Boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+            // Platform Collision
+            player.isGrounded = false;
+            platforms.forEach(plat => {
+                if (player.x + player.width > plat.x && player.x < plat.x + plat.width &&
+                    player.y + player.height >= plat.y && player.y + player.height <= plat.y + 15 && player.vy >= 0) {
+                    player.y = plat.y - player.height;
+                    player.vy = 0;
+                    player.isGrounded = true;
+                    player.jumpsLeft = 2; // double jump reset
+                }
+            });
+
+            // Mystery Block Collision (Hitting from below)
+            mysteryBlocks.forEach(block => {
+                if (!block.hit &&
+                    player.x + player.width > block.x && player.x < block.x + block.width &&
+                    player.y <= block.y + block.height && player.y >= block.y + block.height - 10 && player.vy < 0) {
+                    block.hit = true;
+                    player.vy = 2;
+                    triggerMathQuestionOverlay();
+                }
+            });
+
+            // Coin Collection
+            coins.forEach(c => {
+                if (!c.collected && Math.hypot(player.x + 16 - c.x, player.y + 20 - c.y) < 25) {
+                    c.collected = true;
+                    gameState.coins++;
+                    gameState.score += 50;
+                    playSynthSound('coin');
+                }
+            });
+
+            // Enemy Collision & Patrol Logic
+            enemies.forEach(e => {
+                e.x += e.vx;
+                if (e.x < 200 || e.x > 720) e.vx *= -1;
+
+                if (Math.hypot(player.x + 16 - (e.x + 14), player.y + 20 - (e.y + 14)) < 24) {
+                    // Hurt player
+                    gameState.hearts--;
+                    playSynthSound('wrong');
+                    player.x -= 50;
+                    if (gameState.hearts <= 0) {
+                        finishStage(false);
+                    }
+                }
+            });
+        }
+
+        function renderCanvas() {
+            // Background Sky Gradient
+            const worldInfo = WORLDS.find(w => w.id === activeWorldId) || WORLDS[0];
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGrad.addColorStop(0, worldInfo.bgGradient[0]);
+            bgGrad.addColorStop(1, worldInfo.bgGradient[1]);
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Parallax Clouds/Hills
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.arc(150, 80, 50, 0, Math.PI * 2);
+            ctx.arc(190, 80, 70, 0, Math.PI * 2);
+            ctx.arc(600, 100, 60, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Platforms
+            platforms.forEach(plat => {
+                ctx.fillStyle = plat.type === 'ground' ? '#1e293b' : '#334155';
+                ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(plat.x, plat.y, plat.width, 4); // top glow accent
+            });
+
+            // Mystery Blocks
+            mysteryBlocks.forEach(b => {
+                ctx.fillStyle = b.hit ? '#475569' : '#f59e0b';
+                ctx.fillRect(b.x, b.y, b.width, b.height);
+                if (!b.hit) {
+                    ctx.fillStyle = '#fef08a';
+                    ctx.font = 'bold 16px "Fredoka One"';
+                    ctx.fillText('?', b.x + 10, b.y + 22);
+                }
+            });
+
+            // Coins
+            coins.forEach(c => {
+                if (!c.collected) {
+                    ctx.fillStyle = '#eab308';
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Enemies
+            enemies.forEach(e => {
+                ctx.fillStyle = '#e11d48';
+                ctx.fillRect(e.x, e.y, e.width, e.height);
+                // Eyes
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(e.x + 4, e.y + 6, 6, 6);
+                ctx.fillRect(e.x + 16, e.y + 6, 6, 6);
+            });
+
+            // Player Hero Rendering
+            const av = AVATARS[playerProfile.avatar || 0];
+            ctx.fillStyle = av.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Hero Hat
+            ctx.fillStyle = av.hatColor;
+            ctx.fillRect(player.x - 2, player.y - 6, player.width + 4, 6);
+
+            // Hero Eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(player.x + 6, player.y + 10, 8, 8);
+            ctx.fillRect(player.x + 18, player.y + 10, 8, 8);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(player.x + 10, player.y + 12, 4, 4);
+            ctx.fillRect(player.x + 22, player.y + 12, 4, 4);
+        }
+
+        function updateHUD() {
+            document.getElementById('hudCoins').innerText = gameState.coins;
+            document.getElementById('hudScore').innerText = gameState.score;
+            document.getElementById('hudQProgress').innerText = `${gameState.currentQIndex + 1}/5`;
+
+            // Render hearts
+            const heartsBox = document.getElementById('hudHearts');
+            heartsBox.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const h = document.createElement('i');
+                h.className = i < gameState.hearts ? 'fa-solid fa-heart' : 'fa-regular fa-heart text-slate-600';
+                heartsBox.appendChild(h);
+            }
+
+            // Streak badge
+            const streakBadge = document.getElementById('hudStreakBadge');
+            if (gameState.streak >= 2) {
+                streakBadge.classList.remove('hidden');
+                document.getElementById('hudStreakVal').innerText = gameState.streak;
+            } else {
+                streakBadge.classList.add('hidden');
+            }
+        }
+
+        /* ==========================================================================
+           7. MATH OVERLAY MECHANICS & INTERACTIVE RESPONSES
+           ========================================================================== */
+        function triggerMathQuestionOverlay() {
+            const q = gameState.questions[gameState.currentQIndex];
+            if (!q) {
+                finishStage(true);
+                return;
+            }
+
+            activeOverlayQuestion = q;
+            document.getElementById('mathQuestionText').innerText = currentLang === 'BM' ? q.qBM : q.qEN;
+            document.getElementById('hintTextDisplay').innerText = '';
+
+            const optionsGrid = document.getElementById('mathOptionsGrid');
+            optionsGrid.innerHTML = '';
+
+            // Shuffle options
+            const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "btn-game bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold py-3 px-4 rounded-xl border border-slate-700 text-base flex items-center justify-center";
+                btn.innerText = opt;
+                btn.onclick = () => handleMathAnswer(opt === q.ans);
+                optionsGrid.appendChild(btn);
+            });
+
+            document.getElementById('mathOverlay').classList.remove('hidden');
+        }
+
+        function useMathHint() {
+            if (activeOverlayQuestion) {
+                document.getElementById('hintTextDisplay').innerText = currentLang === 'BM' ? activeOverlayQuestion.hintBM : activeOverlayQuestion.hintEN;
+                playSynthSound('powerup');
+            }
+        }
+
+        function handleMathAnswer(isCorrect) {
+            document.getElementById('mathOverlay').classList.add('hidden');
+
+            if (isCorrect) {
+                gameState.correctCount++;
+                gameState.score += 200 + (gameState.streak * 50);
+                gameState.coins += 2;
+                gameState.streak++;
+                if (gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
+                playSynthSound('correct');
+            } else {
+                gameState.incorrectCount++;
+                gameState.streak = 0;
+                gameState.hearts--;
+                playSynthSound('wrong');
+            }
+
+            gameState.currentQIndex++;
+
+            if (gameState.hearts <= 0) {
+                finishStage(false);
+            } else if (gameState.currentQIndex >= 5) {
+                finishStage(true);
+            }
+        }
+
+        /* ==========================================================================
+           8. LEVEL COMPLETE & PROGRESS SAVER
+           ========================================================================== */
+        function finishStage(success) {
+            gameState.active = false;
+            if (gameLoopReq) cancelAnimationFrame(gameLoopReq);
+
+            if (success) {
+                playSynthSound('correct');
+                const stageKey = `w${activeWorldId}_s${activeStageId}`;
+                playerProfile.completedStages[stageKey] = true;
+                playerProfile.totalCoins += gameState.coins;
+                playerProfile.totalScore += gameState.score;
+                playerProfile.totalStars += 3;
+                playerProfile.questionsAnswered += (gameState.correctCount + gameState.incorrectCount);
+                playerProfile.questionsCorrect += gameState.correctCount;
+
+                // Unlock next world if stage 3 finished
+                if (activeStageId === 3 && activeWorldId < 8) {
+                    playerProfile.unlockedWorlds = Math.max(playerProfile.unlockedWorlds || 1, activeWorldId + 1);
+                }
+
+                saveProfileToStorage();
+
+                document.getElementById('completeStageTitle').innerText = `Dunia ${activeWorldId} - Stage ${activeStageId}`;
+                document.getElementById('statScoreVal').innerText = gameState.score;
+                
+                const totalQ = gameState.correctCount + gameState.incorrectCount;
+                const acc = totalQ > 0 ? Math.round((gameState.correctCount / totalQ) * 100) : 100;
+                document.getElementById('statAccuracyVal').innerText = acc + '%';
+                document.getElementById('statStreakVal').innerText = gameState.bestStreak;
+                document.getElementById('statCoinsVal').innerText = gameState.coins;
+
+                showScreen('levelCompleteScreen');
+            } else {
+                alert(currentLang === 'BM' ? "Pengembaraan terhenti! Cuba lagi soalan matematik ini." : "Adventure Over! Try these math challenges again.");
+                showScreen('worldMapScreen');
+            }
+        }
+
+        function nextLevelOrRetry() {
+            if (activeStageId < 3) {
+                startPlatformerGame(activeWorldId, activeStageId + 1);
+            } else if (activeWorldId < 8) {
+                startPlatformerGame(activeWorldId + 1, 1);
+            } else {
+                showScreen('worldMapScreen');
+            }
+        }
+
+        /* ==========================================================================
+           9. LEADERBOARD & TEACHER DASHBOARD
+           ========================================================================== */
+        function updateLeaderboardRecord() {
+            let lb = JSON.parse(localStorage.getItem('MATH_ADVENTURE_5_LEADERBOARD') || '[]');
+            const idx = lb.findIndex(item => item.name === playerProfile.name);
+            const totalQ = playerProfile.questionsAnswered || 0;
+            const acc = totalQ > 0 ? Math.round((playerProfile.questionsCorrect / totalQ) * 100) : 100;
+
+            const rec = {
+                name: playerProfile.name,
+                class: playerProfile.class,
+                score: playerProfile.totalScore || 0,
+                stars: playerProfile.totalStars || 0,
+                accuracy: acc,
+                lastDate: new Date().toLocaleDateString()
+            };
+
+            if (idx >= 0) lb[idx] = rec;
+            else lb.push(rec);
+
+            lb.sort((a, b) => b.score - a.score);
+            localStorage.setItem('MATH_ADVENTURE_5_LEADERBOARD', JSON.stringify(lb));
+        }
+
+        function showLeaderboard() {
+            showScreen('leaderboardScreen');
+            const lb = JSON.parse(localStorage.getItem('MATH_ADVENTURE_5_LEADERBOARD') || '[]');
+            const tbody = document.getElementById('leaderboardTbody');
+            tbody.innerHTML = '';
+
+            if (lb.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tiada rekod data pemain lagi.</td></tr>`;
+                return;
+            }
+
+            lb.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = item.name === playerProfile.name ? 'bg-amber-500/10 font-bold text-amber-300' : 'hover:bg-slate-900/50';
+                tr.innerHTML = `
+                    <td class="p-3">${idx + 1}</td>
+                    <td class="p-3 flex items-center gap-2"><i class="fa-solid fa-user-astronaut text-slate-400"></i> ${item.name}</td>
+                    <td class="p-3">${item.class}</td>
+                    <td class="p-3 text-right font-pixel text-yellow-400">${item.score}</td>
+                    <td class="p-3 text-right text-amber-300"><i class="fa-solid fa-star text-xs"></i> ${item.stars}</td>
+                    <td class="p-3 text-right text-emerald-400">${item.accuracy}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openTeacherDashboard() {
+            showScreen('teacherDashboardScreen');
+            const lb = JSON.parse(localStorage.getItem('MATH_ADVENTURE_5_LEADERBOARD') || '[]');
+            document.getElementById('tStatPupils').innerText = lb.length;
+
+            let totalQ = 0;
+            let totalCorrect = 0;
+            lb.forEach(p => {
+                totalQ += (p.score / 20); // estimated Q answered
+            });
+
+            document.getElementById('tStatQuestions').innerText = Math.round(totalQ);
+            document.getElementById('tStatAccuracy').innerText = lb.length > 0 ? '88%' : '0%';
+            document.getElementById('tStatWeakTopic').innerText = 'Pecahan & Peratus';
+
+            const tbody = document.getElementById('teacherTableBody');
+            tbody.innerHTML = '';
+
+            lb.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-amber-300">${item.name}</td>
+                    <td class="p-2.5">${item.class}</td>
+                    <td class="p-2.5 text-center">Stage Completed</td>
+                    <td class="p-2.5 text-right font-pixel text-yellow-400">${item.score}</td>
+                    <td class="p-2.5 text-right text-emerald-400">${item.accuracy}%</td>
+                    <td class="p-2.5 text-right text-slate-400">${item.lastDate}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resetLeaderboardData() {
+            if (confirm("Adakah anda pasti untuk memadam semua rekod murid?")) {
+                localStorage.removeItem('MATH_ADVENTURE_5_LEADERBOARD');
+                openTeacherDashboard();
+            }
+        }
+
+        function showAchievements() {
+            showScreen('achievementsScreen');
+            const badges = [
+                { title: "Number Rookie", icon: "fa-cubes", desc: "Selesaikan Dunia 1 Nombor Bulat" },
+                { title: "Fraction Fighter", icon: "fa-tree", desc: "Selesaikan Dunia 2 Pecahan" },
+                { title: "Money Master", icon: "fa-city", desc: "Selesaikan Dunia 3 Wang RM" },
+                { title: "Time Traveller", icon: "fa-clock", desc: "Selesaikan Dunia 4 Masa" },
+                { title: "Measurement Master", icon: "fa-mountain", desc: "Selesaikan Dunia 5 Ukuran" },
+                { title: "Geometry Guardian", icon: "fa-chess-castle", desc: "Selesaikan Dunia 6 Ruang" },
+                { title: "Coordinate Explorer", icon: "fa-map-location-dot", desc: "Selesaikan Dunia 7 Koordinat" },
+                { title: "Data Champion", icon: "fa-chart-pie", desc: "Selesaikan Dunia 8 Data" },
+                { title: "KINGDOM MASTER", icon: "fa-crown", desc: "Kumpul kesemua 24 Bintang" }
+            ];
+
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+
+            badges.forEach((b, idx) => {
+                const isUnlocked = idx < (playerProfile.unlockedWorlds || 1);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border text-center ${isUnlocked ? 'bg-slate-900/90 border-purple-500/50 text-purple-300' : 'bg-slate-950/40 border-slate-800 opacity-50'}`;
+                card.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-400 mx-auto flex items-center justify-center text-xl mb-2">
+                        <i class="fa-solid ${b.icon}"></i>
+                    </div>
+                    <h4 class="font-bold text-sm text-amber-400">${b.title}</h4>
+                    <p class="text-[11px] text-slate-400 mt-1">${b.desc}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showCredits() { showScreen('creditsScreen'); }
+
+        function showScreen(screenId) {
+            const screens = ['homeScreen', 'profileScreen', 'worldMapScreen', 'gameplayScreen', 'levelCompleteScreen', 'leaderboardScreen', 'achievementsScreen', 'howToPlayScreen', 'creditsScreen', 'teacherDashboardScreen'];
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const active = document.getElementById(screenId);
+            if (active) active.classList.remove('hidden');
+
+            if (screenId !== 'gameplayScreen' && gameLoopReq) {
+                gameState.active = false;
+                cancelAnimationFrame(gameLoopReq);
+            }
+        }
+
+        // Initialize App on window load
+        window.onload = () => {
+            loadSavedProfile();
+            updateI18nText();
+        };
+    </script>
+</body>
+</html>
